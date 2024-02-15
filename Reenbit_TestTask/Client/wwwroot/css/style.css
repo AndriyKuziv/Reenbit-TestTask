@@ -1,0 +1,13 @@
+﻿.form-object {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.form-object div{
+    max-width: 500px;
+}
+
+.form-object input{
+    width: 13vw;
+    min-width: 200px;
+}

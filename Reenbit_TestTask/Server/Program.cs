@@ -1,4 +1,6 @@
-using Microsoft.AspNetCore.ResponseCompression;
+using Reenbit_TestTask.Server.Repositories;
+using Microsoft.Extensions.Azure;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +8,23 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+builder.Services.AddScoped<IDocumentsRepository, DocumentsRepository>();
+builder.Services.AddAzureClients(clientBuilder =>
+{
+    clientBuilder.AddBlobServiceClient(builder.Configuration["ConnectionStrings:AzureStorage"], preferMsi: true);
+    //clientBuilder.AddQueueServiceClient(builder.Configuration["ConnectionStrings:AzureStorage:queue"], preferMsi: true);
+});
+
+builder.Services.AddCors(options => options.AddPolicy("AllowAll",
+    builder => builder
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    )
+);
+
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
@@ -28,9 +47,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-
 app.MapRazorPages();
 app.MapControllers();
 app.MapFallbackToFile("index.html");
+
+app.UseCors("AllowAll");
 
 app.Run();

@@ -1,9 +1,70 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject ILogger<UploadModel> Logger
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Main page</PageTitle>
 
-<h1>Hello, world!</h1>
+<EditForm Model="Model" OnValidSubmit="Submit">
+    <DataAnnotationsValidator />
 
-Welcome to your new app.
+    <div class="form-object">
+        <label for="email">Email:</label>
+        <InputText id="email" @bind-Value="Model!.Email" />
+        <ValidationMessage For="@(() => Model!.Email)" />
+    </div>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+    <div class="form-object">
+        <label for="file">Choose a File:</label>
+        <InputFile OnChange="ChangeFile" id="file" accept=".docx" />
+        <ValidationMessage For="@(() => Model!.File)" />
+    </div>
+
+    <button>Upload</button>
+</EditForm>
+
+@code {
+    public UploadModel? Model { get; set; }
+
+    protected override void OnInitialized() => Model ??= new();
+
+    public class UploadModel
+    {
+        [Required(ErrorMessage = "Please provide an email")]
+        [EmailAddress(ErrorMessage = "Please provide a valid email")]
+        public string? Email { get; set; }
+
+        [Required(ErrorMessage = "Please provide a file")]
+        public IBrowserFile? File { get; set; }
+    }
+
+    private void ChangeFile(InputFileChangeEventArgs e)
+    {
+        if(Model != null)
+        {
+            Model.File = e.File;
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (Model is null || Model.File is null) return;
+
+        using var content = new MultipartFormDataContent();
+        var fileContent = new StreamContent(Model.File.OpenReadStream());
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(Model.File.ContentType);
+
+        content.Add(
+            content: fileContent,
+            name: "\"file\"",
+            fileName: Model.File.Name
+        );
+
+        string callPath = "https://reenbittesttaskappservice.azurewebsites.net/documents/upload";
+        var response = await Http.PostAsync(callPath, content);
+    }
+}
