@@ -11,3 +11,7 @@
     width: 13vw;
     min-width: 200px;
 }
+
+#link-status{
+    display: var(--sp-display);
+}

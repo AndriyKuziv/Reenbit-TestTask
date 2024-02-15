@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
 using Reenbit_TestTask.Server.Repositories;
+using Reenbit_TestTask.Shared.Models.DTO;
 
 namespace Reenbit_TestTask.Server.Controllers
 {
@@ -25,9 +26,14 @@ namespace Reenbit_TestTask.Server.Controllers
         [Route("upload")]
         public async Task<IActionResult> UploadDoc(IFormFile file)
         {
-            await _documentsRepository.UploadAsync(file);
+            var uri = await _documentsRepository.UploadAsync(file);
 
-            return Ok();
+            var uriDTO = new DocUri()
+            {
+                Uri = uri,
+            };
+
+            return Ok(uriDTO);
         }
     }
 }

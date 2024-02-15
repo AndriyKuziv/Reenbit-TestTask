@@ -6,6 +6,7 @@
 @using System.Net.Http.Headers
 @inject HttpClient Http
 @inject ILogger<UploadModel> Logger
+@inject IJSRuntime JsRuntime
 
 <PageTitle>Main page</PageTitle>
 
@@ -25,12 +26,23 @@
     </div>
 
     <button>Upload</button>
+    <span id="link-status" style="--sp-display: @Attributes.Display;">@Attributes.TextContent</span>
 </EditForm>
 
 @code {
     public UploadModel? Model { get; set; }
 
-    protected override void OnInitialized() => Model ??= new();
+    [Parameter]
+    public LinkStyle Attributes { get; set; }
+
+    protected override void OnInitialized() {
+        Model ??= new ();
+        Attributes = new LinkStyle()
+            {
+                Display = "none",
+                TextContent = "Loading..."
+            };
+    }
 
     public class UploadModel
     {
@@ -40,6 +52,17 @@
 
         [Required(ErrorMessage = "Please provide a file")]
         public IBrowserFile? File { get; set; }
+    }
+
+    public class ResponseModel
+    {
+        public string? uri { get; set; }
+    }
+
+    public class LinkStyle
+    {
+        public string Display { get; set; }
+        public string TextContent { get; set; }
     }
 
     private void ChangeFile(InputFileChangeEventArgs e)
@@ -54,6 +77,9 @@
     {
         if (Model is null || Model.File is null) return;
 
+        Attributes.Display = "block";
+        Attributes.TextContent = "Loading...";
+
         using var content = new MultipartFormDataContent();
         var fileContent = new StreamContent(Model.File.OpenReadStream());
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(Model.File.ContentType);
@@ -66,5 +92,21 @@
 
         string callPath = "https://reenbittesttaskappservice.azurewebsites.net/documents/upload";
         var response = await Http.PostAsync(callPath, content);
+        response.EnsureSuccessStatusCode();
+
+        var t = await response.Content.ReadAsStringAsync();
+        var temp = JsonSerializer.Deserialize<ResponseModel>(t);
+        Logger.LogInformation(temp.uri);
+
+        await SuccessNotification(temp.uri);
     }
+
+    private async Task SuccessNotification(string uri)
+    {
+        Attributes.Display = "block";
+        Attributes.TextContent = "Document has been uploaded successfully!\nLink to the document:\n" + uri;
+    }
+
+
+
 }

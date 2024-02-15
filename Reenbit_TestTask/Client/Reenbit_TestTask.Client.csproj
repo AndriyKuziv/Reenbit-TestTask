@@ -17,6 +17,8 @@
     <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="Telerik.FontIcons" Version="2.1.0" />
+    <PackageReference Include="Telerik.SvgIcons" Version="2.1.0" />
   </ItemGroup>
 
   <ItemGroup>

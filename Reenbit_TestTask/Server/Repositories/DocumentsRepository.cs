@@ -1,5 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Forms;
 using Reenbit_TestTask.Server.Extensions;
@@ -38,11 +39,31 @@ namespace Reenbit_TestTask.Server.Repositories
             return docName;
         }
 
-        private string CreateDocUri(string docName)
+        private string CreateDocUri(string docName, string storedPolicyName = null)
         {
+            BlobSasBuilder sasBuilder = new BlobSasBuilder()
+            {
+                BlobContainerName = containerName,
+                BlobName = docName,
+                Resource = "b"
+            };
+            if (storedPolicyName == null)
+            {
+                sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddHours(1);
+                sasBuilder.SetPermissions(BlobContainerSasPermissions.Read);
+            }
+            else
+            {
+                sasBuilder.Identifier = storedPolicyName;
+            }
+
+            BlobClient blobClient = _blobContainerClient.GetBlobClient(docName);
+
+            Uri sasURI = blobClient.GenerateSasUri(sasBuilder);
+
             string docUri = _blobContainerClient.Uri.AbsoluteUri + '/' + docName;
 
-            return docUri;
+            return sasURI.AbsoluteUri;
         }
     }
 }
