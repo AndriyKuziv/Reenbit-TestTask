@@ -23,5 +23,9 @@
     <ProjectReference Include="..\Shared\Reenbit_TestTask.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Utilities\" />
+  </ItemGroup>
+
 
 </Project>

@@ -3,6 +3,8 @@ using Microsoft.Extensions.Azure;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 // Add services to the container.
 
@@ -13,7 +15,6 @@ builder.Services.AddScoped<IDocumentsRepository, DocumentsRepository>();
 builder.Services.AddAzureClients(clientBuilder =>
 {
     clientBuilder.AddBlobServiceClient(builder.Configuration["ConnectionStrings:AzureStorage"], preferMsi: true);
-    //clientBuilder.AddQueueServiceClient(builder.Configuration["ConnectionStrings:AzureStorage:queue"], preferMsi: true);
 });
 
 builder.Services.AddCors(options => options.AddPolicy("AllowAll",

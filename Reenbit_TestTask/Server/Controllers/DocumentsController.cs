@@ -16,17 +16,14 @@ namespace Reenbit_TestTask.Server.Controllers
             _documentsRepository = documentsRepository;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllDocs()
-        {
-            return Ok();
-        }
-
         [HttpPost]
         [Route("upload")]
-        public async Task<IActionResult> UploadDoc(IFormFile file)
+        public async Task<IActionResult> UploadDoc([FromForm] UploadDocRequest uploadDocRequest)
         {
-            var uri = await _documentsRepository.UploadAsync(file);
+            Console.WriteLine($"Setting up an email \"{uploadDocRequest.Email}\"");
+            await SetEmail(uploadDocRequest);
+            Console.WriteLine("Done!");
+            var uri = await _documentsRepository.UploadAsync(uploadDocRequest.File, GenerateDocName());
 
             var uriDTO = new DocUri()
             {
@@ -34,6 +31,34 @@ namespace Reenbit_TestTask.Server.Controllers
             };
 
             return Ok(uriDTO);
+        }
+
+        private async Task SetEmail(UploadDocRequest uploadDocRequest)
+        {
+            string funcUrl = "https://reenbittesttaskfunctionapp.azurewebsites.net/api/ReceiveParams?code=2IR-gZQuM9O_DuRw_kG0rJN86Q8c43fRJjaMIavTHe25AzFufpBQFg==";
+
+            using HttpClient client = new HttpClient();
+            var response = await client.PostAsync(funcUrl, 
+                new StringContent("{\"email\": " + $"\"{uploadDocRequest.Email}\"" + "}"));
+            Console.WriteLine(response.StatusCode);
+            var httpContent = response.Content;
+
+            string data = await httpContent.ReadAsStringAsync();
+            if (!string.IsNullOrEmpty(data))
+            {
+                Console.WriteLine(data);
+            }
+            else
+            {
+                Console.WriteLine("Data is null or empty");
+            }
+        }
+
+        private string GenerateDocName()
+        {
+            string docName = Guid.NewGuid().ToString() + ".docx";
+
+            return docName;
         }
     }
 }

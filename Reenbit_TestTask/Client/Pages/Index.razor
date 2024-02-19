@@ -5,8 +5,6 @@
 @using System.Text.Json.Serialization
 @using System.Net.Http.Headers
 @inject HttpClient Http
-@inject ILogger<UploadModel> Logger
-@inject IJSRuntime JsRuntime
 
 <PageTitle>Main page</PageTitle>
 
@@ -81,27 +79,32 @@
         Attributes.TextContent = "Loading...";
 
         using var content = new MultipartFormDataContent();
+
         var fileContent = new StreamContent(Model.File.OpenReadStream());
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(Model.File.ContentType);
-
         content.Add(
             content: fileContent,
             name: "\"file\"",
             fileName: Model.File.Name
         );
 
+        var emailContent = new StringContent(Model.Email);
+        content.Add(
+            content: emailContent,
+            name: "\"email\""
+        );
+
         string callPath = "https://reenbittesttaskappservice.azurewebsites.net/documents/upload";
         var response = await Http.PostAsync(callPath, content);
         response.EnsureSuccessStatusCode();
 
-        var t = await response.Content.ReadAsStringAsync();
-        var temp = JsonSerializer.Deserialize<ResponseModel>(t);
-        Logger.LogInformation(temp.uri);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var jsonResponseContent = JsonSerializer.Deserialize<ResponseModel>(responseContent);
 
-        await SuccessNotification(temp.uri);
+        SuccessNotification(jsonResponseContent.uri);
     }
 
-    private async Task SuccessNotification(string uri)
+    private void SuccessNotification(string uri)
     {
         Attributes.Display = "block";
         Attributes.TextContent = "Document has been uploaded successfully!\nLink to the document:\n" + uri;

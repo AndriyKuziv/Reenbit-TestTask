@@ -6,6 +6,6 @@ namespace Reenbit_TestTask.Server.Repositories
     public interface IDocumentsRepository
     {
 
-        Task<string> UploadAsync(IFormFile docFile);
+        Task<string> UploadAsync(IFormFile docFile, string docName);
     }
 }

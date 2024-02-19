@@ -1,0 +1,10 @@
+global using Xunit;
+global using System;
+global using System.IO;
+global using System.Threading.Tasks;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Mvc;
+global using Moq;
+global using Reenbit_TestTask.Server.Controllers;
+global using Reenbit_TestTask.Server.Repositories;
+global using Reenbit_TestTask.Shared.Models.DTO;
