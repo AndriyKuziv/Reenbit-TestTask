@@ -20,9 +20,7 @@ namespace Reenbit_TestTask.Server.Controllers
         [Route("upload")]
         public async Task<IActionResult> UploadDoc([FromForm] UploadDocRequest uploadDocRequest)
         {
-            Console.WriteLine($"Setting up an email \"{uploadDocRequest.Email}\"");
             await SetEmail(uploadDocRequest);
-            Console.WriteLine("Done!");
             var uri = await _documentsRepository.UploadAsync(uploadDocRequest.File, GenerateDocName());
 
             var uriDTO = new DocUri()
@@ -44,14 +42,6 @@ namespace Reenbit_TestTask.Server.Controllers
             var httpContent = response.Content;
 
             string data = await httpContent.ReadAsStringAsync();
-            if (!string.IsNullOrEmpty(data))
-            {
-                Console.WriteLine(data);
-            }
-            else
-            {
-                Console.WriteLine("Data is null or empty");
-            }
         }
 
         private string GenerateDocName()

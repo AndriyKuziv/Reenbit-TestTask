@@ -28,7 +28,7 @@ namespace Reenbit_TestTask.Server.Tests.Unit
         {
             // Arrange
             var expectedUri = "https://test.com/testDoc.docx";
-            _documentsRepositoryMock.Setup(repo => repo.UploadAsync(It.IsAny<IFormFile>(), _formFileMockName))
+            _documentsRepositoryMock.Setup(repo => repo.UploadAsync(It.IsAny<IFormFile>(), It.IsAny<string>()))
                                                       .ReturnsAsync(expectedUri);
             var controller = new DocumentsController(_documentsRepositoryMock.Object);
 
