@@ -8,7 +8,6 @@ namespace Reenbit_TestTask.Server.Tests.Unit
     {
         private readonly Mock<IDocumentsRepository> _documentsRepositoryMock = new Mock<IDocumentsRepository>();
         private Mock<IFormFile> _formFileMock = new Mock<IFormFile>();
-        private readonly string _formFileMockName = "test.docx";
         private readonly string _email = "email@test.com";
         private readonly UploadDocRequest _uploadDocRequest;
 
@@ -25,9 +24,9 @@ namespace Reenbit_TestTask.Server.Tests.Unit
         public async Task UploadDoc_ReturnsOkResult_WithUri()
         {
             // Arrange
-            var expectedUri = "https://test.com/testDoc.docx";
+            var expectedDocName = "test.docx";
             _documentsRepositoryMock.Setup(repo => repo.UploadAsync(It.IsAny<IFormFile>(), It.IsAny<string>()))
-                                                      .ReturnsAsync(expectedUri);
+                                                      .ReturnsAsync(expectedDocName);
             var controller = new DocumentsController(_documentsRepositoryMock.Object);
 
             // Act
@@ -36,8 +35,8 @@ namespace Reenbit_TestTask.Server.Tests.Unit
             // Assert
             Assert.NotNull(response);
             var result = Assert.IsType<OkObjectResult>(response);
-            var responseUri = Assert.IsType<DocUri>(result.Value);
-            Assert.Equal(expectedUri, responseUri.Uri);
+            var responseUri = Assert.IsType<UploadDocResponse>(result.Value);
+            Assert.Equal(expectedDocName, responseUri.DocName);
         }
     }
 }

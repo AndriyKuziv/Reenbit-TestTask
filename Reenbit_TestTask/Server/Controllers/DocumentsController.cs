@@ -21,19 +21,19 @@ namespace Reenbit_TestTask.Server.Controllers
         public async Task<IActionResult> UploadDoc([FromForm] UploadDocRequest uploadDocRequest)
         {
             await SetEmail(uploadDocRequest);
-            var uri = await _documentsRepository.UploadAsync(uploadDocRequest.File, GenerateDocName());
+            var newDocName = await _documentsRepository.UploadAsync(uploadDocRequest.File, GenerateDocName());
 
-            var uriDTO = new DocUri()
+            var docDTO = new UploadDocResponse()
             {
-                Uri = uri,
+                DocName = newDocName,
             };
 
-            return Ok(uriDTO);
+            return Ok(docDTO);
         }
 
         private async Task SetEmail(UploadDocRequest uploadDocRequest)
         {
-            string funcUrl = "https://reenbittesttaskfunctionapp.azurewebsites.net/api/ReceiveParams?code=2IR-gZQuM9O_DuRw_kG0rJN86Q8c43fRJjaMIavTHe25AzFufpBQFg==";
+            string funcUrl = "https://reenbittesttaskfunctionapp.azurewebsites.net/api/ReceiveParams?code=Vxk-a0s9O3cuaAzDiYtoPh3-nY7FHewj-oCBDZj_qgoAAzFuF5YeTw==";
 
             using HttpClient client = new HttpClient();
             var response = await client.PostAsync(funcUrl, 

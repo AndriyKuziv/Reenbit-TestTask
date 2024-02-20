@@ -4,7 +4,7 @@
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @using System.Net.Http.Headers
-@inject HttpClient Http
+@inherits IndexComponent
 
 <PageTitle>Main page</PageTitle>
 
@@ -26,87 +26,3 @@
     <button>Upload</button>
     <span id="link-status" style="--sp-display: @Attributes.Display;">@Attributes.TextContent</span>
 </EditForm>
-
-@code {
-    public UploadModel? Model { get; set; }
-
-    [Parameter]
-    public LinkStyle Attributes { get; set; }
-
-    protected override void OnInitialized() {
-        Model ??= new ();
-        Attributes = new LinkStyle()
-            {
-                Display = "none",
-                TextContent = "Loading..."
-            };
-    }
-
-    public class UploadModel
-    {
-        [Required(ErrorMessage = "Please provide an email")]
-        [EmailAddress(ErrorMessage = "Please provide a valid email")]
-        public string? Email { get; set; }
-
-        [Required(ErrorMessage = "Please provide a file")]
-        public IBrowserFile? File { get; set; }
-    }
-
-    public class ResponseModel
-    {
-        public string? uri { get; set; }
-    }
-
-    public class LinkStyle
-    {
-        public string Display { get; set; }
-        public string TextContent { get; set; }
-    }
-
-    private void ChangeFile(InputFileChangeEventArgs e)
-    {
-        if(Model != null)
-        {
-            Model.File = e.File;
-        }
-    }
-
-    private async Task Submit()
-    {
-        if (Model is null || Model.File is null) return;
-
-        Attributes.Display = "block";
-        Attributes.TextContent = "Loading...";
-
-        using var content = new MultipartFormDataContent();
-
-        var fileContent = new StreamContent(Model.File.OpenReadStream());
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue(Model.File.ContentType);
-        content.Add(
-            content: fileContent,
-            name: "\"file\"",
-            fileName: Model.File.Name
-        );
-
-        var emailContent = new StringContent(Model.Email);
-        content.Add(
-            content: emailContent,
-            name: "\"email\""
-        );
-
-        string callPath = "https://reenbittesttaskappservice.azurewebsites.net/documents/upload";
-        var response = await Http.PostAsync(callPath, content);
-        response.EnsureSuccessStatusCode();
-
-        var responseContent = await response.Content.ReadAsStringAsync();
-        var jsonResponseContent = JsonSerializer.Deserialize<ResponseModel>(responseContent);
-
-        SuccessNotification(jsonResponseContent.uri);
-    }
-
-    private void SuccessNotification(string uri)
-    {
-        Attributes.Display = "block";
-        Attributes.TextContent = "Document has been uploaded successfully!\nLink to the document:\n" + uri;
-    }
-}

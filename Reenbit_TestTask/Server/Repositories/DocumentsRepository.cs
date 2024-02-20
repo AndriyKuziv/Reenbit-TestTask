@@ -24,34 +24,8 @@ namespace Reenbit_TestTask.Server.Repositories
             using Stream data = docFile.OpenReadStream();
             await _blobContainerClient.UploadBlobAsync(docName, data);
 
-            string docUri = CreateDocUri(docName);
-
-            return docUri;
+            return docName;
         }
 
-        private string CreateDocUri(string docName, string storedPolicyName = null)
-        {
-            BlobSasBuilder sasBuilder = new BlobSasBuilder()
-            {
-                BlobContainerName = containerName,
-                BlobName = docName,
-                Resource = "b"
-            };
-            if (storedPolicyName == null)
-            {
-                sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddHours(1);
-                sasBuilder.SetPermissions(BlobContainerSasPermissions.Read);
-            }
-            else
-            {
-                sasBuilder.Identifier = storedPolicyName;
-            }
-
-            BlobClient blobClient = _blobContainerClient.GetBlobClient(docName);
-
-            Uri sasURI = blobClient.GenerateSasUri(sasBuilder);
-
-            return sasURI.AbsoluteUri;
-        }
     }
 }

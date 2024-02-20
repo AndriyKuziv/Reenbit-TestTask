@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "secrets2": {
+      "ignored": "true",
+      "type": "secrets.keyVault"
+    },
+    "storage1": {
+      "secretStore": "AzureAppSettings",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Storage/storageAccounts/csb1003200351c3adc4",
+      "type": "storage.azure",
+      "connectionId": "ConnectionStrings:AzureStorage"
+    }
+  }
+}

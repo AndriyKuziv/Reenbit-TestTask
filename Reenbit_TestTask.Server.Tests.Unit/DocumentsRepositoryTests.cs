@@ -10,16 +10,12 @@ namespace Reenbit_TestTask.Server.Tests.Unit
         private readonly Mock<BlobContainerClient> _blobContainerClientMock = new Mock<BlobContainerClient>();
         private readonly Mock<BlobClient> _blobClientMock = new Mock<BlobClient>();
         private readonly Mock<IFormFile> _formFileMock = new Mock<IFormFile>();
-        private readonly string _formFileMockName = "test.docx";
 
         [Fact]
         public async Task UploadAsync_ReturnsUri()
         {
             // Arrange
-            var expectedUri = "https://test.com/testDoc.docx";
-
-            var returnUri = new Uri(expectedUri);
-            _blobClientMock.Setup(client => client.GenerateSasUri(It.IsAny<BlobSasBuilder>())).Returns(returnUri);
+            var expectedDocName = "newTestDocName.docx";
 
             _blobContainerClientMock.Setup(cclient => cclient.UploadBlobAsync(It.IsAny<string>(),
                 It.IsAny<Stream>(), It.IsAny<CancellationToken>()));
@@ -31,11 +27,11 @@ namespace Reenbit_TestTask.Server.Tests.Unit
             var documentsRepository = new DocumentsRepository(_blobServiceClientMock.Object);
 
             // Act
-            var resultUri = await documentsRepository.UploadAsync(_formFileMock.Object, _formFileMockName);
+            var resultDocName = await documentsRepository.UploadAsync(_formFileMock.Object, expectedDocName);
 
             // Assert
-            Assert.NotNull(resultUri);
-            Assert.Equal(expectedUri, resultUri);
+            Assert.NotNull(resultDocName);
+            Assert.Equal(expectedDocName, resultDocName);
         }
     }
 }

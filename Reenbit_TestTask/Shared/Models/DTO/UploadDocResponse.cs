@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Reenbit_TestTask.Shared.Models.DTO
 {
-    public class DocUri
+    public class UploadDocResponse
     {
-        [JsonPropertyName("uri")]
-        public required string Uri { get; set; }
+        [JsonPropertyName("docName")]
+        public required string DocName { get; set; }
     }
 }

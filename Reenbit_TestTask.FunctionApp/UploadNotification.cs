@@ -7,11 +7,8 @@ using Azure;
 using Azure.Communication.Email;
 using System.Collections.Generic;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
-using Reenbit_TestTask.FunctionApp.Entities;
-using System.Text.Json;
 using Reenbit_TestTask.FunctionApp.Models;
 using Newtonsoft.Json;
 
@@ -21,36 +18,57 @@ namespace Reenbit_TestTask.FunctionApp
     public class UploadNotification
     {
         private readonly string _paramsFile = "tempParams.json";
-        private readonly IConfiguration _configuration;
+        private readonly static string _paramsContainer = "private-values";
+
         private readonly BlobContainerClient _blobContainerClient;
 
-        public UploadNotification(IConfiguration configuration, BlobServiceClient blobServiceClient)
+        public UploadNotification(BlobServiceClient blobServiceClient)
         {
-            _configuration = configuration;
-            _blobContainerClient = blobServiceClient.GetBlobContainerClient(_configuration.GetValue<string>("ContainerName"));
+            _blobContainerClient = blobServiceClient.GetBlobContainerClient(Environment.GetEnvironmentVariable("MainContainerName"));
         }
 
         [FunctionName("UploadNotification")]
-        public async Task Run([BlobTrigger("test-task-container/{name}")] Stream myBlob,
+        public async Task Run([BlobTrigger("test-task-container/{name}", Connection = "BlobConnectionString")] Stream myBlob,
             string name,
             ILogger log)
         {
             log.LogInformation($"C# Blob trigger function Processed blob\n Name:{name} \n Size: {myBlob.Length} Bytes");
-
-            var file = File.ReadAllText(_paramsFile);
-            var requestParams = JsonConvert.DeserializeObject<EmailRequestParams>(file);
-
-            var email = requestParams.Email;
-            log.LogInformation("Done!");
-
-            log.LogInformation($"Email: {email}");
-            if (string.IsNullOrEmpty(email))
+            try
             {
-                log.LogError("Email of a recipient does not exist");
-                return;
-            }
+                log.LogInformation("Getting params from a file...");
+                var requestParams = JsonConvert.DeserializeObject<EmailRequestParams>(await GetJsonParams());
 
-            SendEmail(email, CreateFileUri(name));
+                var email = requestParams.Email;
+                log.LogInformation("Done!");
+
+                log.LogInformation($"Email: {email}");
+                if (string.IsNullOrEmpty(email))
+                {
+                    log.LogError("Email of a recipient does not exist");
+                    return;
+                }
+
+                SendEmail(email, CreateFileUri(name));
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex.Message);
+                log.LogError(ex.StackTrace);
+            }
+        }
+
+        private async Task<string> GetJsonParams()
+        {
+            string blobConnection = Environment.GetEnvironmentVariable("BlobConnectionString");
+            var blobServiceClient = new BlobServiceClient(blobConnection);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(_paramsContainer);
+            var blobClient = blobContainerClient.GetBlobClient(_paramsFile);
+
+            var response = await blobClient.DownloadAsync();
+
+            using var reader = new StreamReader(response.Value.Content);
+
+            return await reader.ReadToEndAsync();
         }
 
         private void SendEmail(string recipientEmail, string uri)
@@ -61,7 +79,7 @@ namespace Reenbit_TestTask.FunctionApp
                 return;
             }
 
-            string connectionString = _configuration.GetValue<string>("AzureCommResource");
+            string connectionString = Environment.GetEnvironmentVariable("AzureCommResource");
             EmailClient emailClient = new EmailClient(connectionString);
 
             var emailContent = new EmailContent("Document Upload")
@@ -77,27 +95,17 @@ namespace Reenbit_TestTask.FunctionApp
 
             var emailRecipients = new EmailRecipients(toRecipients);
 
-            var emailMessage = new EmailMessage(_configuration.GetValue<string>("EmailDomainName"), emailRecipients, emailContent);
+            var emailMessage = new EmailMessage(Environment.GetEnvironmentVariable("EmailDomainName"), emailRecipients, emailContent);
 
-            try
-            {
-                var emailSendOperation = emailClient.Send(WaitUntil.Completed, emailMessage);
-                Console.WriteLine($"Email Sent. Status = {emailSendOperation.Value.Status}");
-
-                var operationId = emailSendOperation.Id;
-                Console.WriteLine($"Email operation id = {operationId}");
-            }
-            catch (RequestFailedException ex)
-            {
-                Console.WriteLine($"Email send operation failed with error code: {ex.ErrorCode}, message: {ex.Message}");
-            }
+            var emailSendOperation = emailClient.Send(WaitUntil.Completed, emailMessage);
+            Console.WriteLine($"Email Sent. Status = {emailSendOperation.Value.Status}");
         }
 
         private string CreateFileUri(string docName, string storedPolicyName = null)
         {
             BlobSasBuilder sasBuilder = new BlobSasBuilder()
             {
-                BlobContainerName = _configuration.GetValue<string>("ContainerName"),
+                BlobContainerName = Environment.GetEnvironmentVariable("MainContainerName"),
                 BlobName = docName,
                 Resource = "b"
             };
@@ -114,8 +122,6 @@ namespace Reenbit_TestTask.FunctionApp
             BlobClient blobClient = _blobContainerClient.GetBlobClient(docName);
 
             Uri sasURI = blobClient.GenerateSasUri(sasBuilder);
-
-            string docUri = _blobContainerClient.Uri.AbsoluteUri + '/' + docName;
 
             return sasURI.AbsoluteUri;
         }

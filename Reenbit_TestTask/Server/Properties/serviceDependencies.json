@@ -1,12 +1,16 @@
 {
   "dependencies": {
+    "storage2": {
+      "type": "storage",
+      "connectionId": "ConnectionStrings:AzureStorage"
+    },
     "secrets1": {
-      "type": "secrets"
+      "type": "secrets",
+      "connectionId": null
     },
     "storage1": {
       "type": "storage",
-      "connectionId": "ConnectionStrings:AzureStorage",
-      "dynamicId": null
+      "connectionId": "ConnectionStrings:AzureStorage"
     }
   }
 }
