@@ -18,9 +18,16 @@ namespace Reenbit_TestTask.FunctionApp.Entities
         [JsonProperty("email")]
         public string Email { get; set; }
 
-        public void Set(string email) => Email = email;
+        public Task Set(string email)
+        {
+            Email = email;
+            return Task.CompletedTask;
+        }
 
-        public string Get() => this.Email;
+        public Task<string> Get()
+        {
+            return Task.FromResult(Email);
+        }
 
         [FunctionName(nameof(RecipientEmail))]
         public static Task Run([EntityTrigger] IDurableEntityContext ctx)

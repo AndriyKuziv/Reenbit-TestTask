@@ -10,15 +10,17 @@ using Newtonsoft.Json;
 using Reenbit_TestTask.FunctionApp.Models;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Reenbit_TestTask.FunctionApp.Entities;
+using Newtonsoft.Json.Linq;
 
 namespace Reenbit_TestTask.FunctionApp
 {
     public static class ReceiveParams
     {
+        private readonly static string _paramsFile = "tempParams.json";
+
         [FunctionName("ReceiveParams")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-            [DurableClient] IDurableEntityClient client,
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
@@ -34,8 +36,28 @@ namespace Reenbit_TestTask.FunctionApp
                 return new BadRequestResult();
             }
 
-            var entityId = new EntityId(nameof(RecipientEmail), "myParams");
-            await client.SignalEntityAsync(entityId, "Set", email);
+            //var entityId = new EntityId(nameof(RecipientEmail), "myParams");
+            //await client.SignalEntityAsync(entityId, "Set", email);
+
+            EmailRequestParams content;
+            if (File.Exists(_paramsFile))
+            {
+                var jsonContent = File.ReadAllText(_paramsFile);
+                content = JsonConvert.DeserializeObject<EmailRequestParams>(jsonContent);
+                content.Email = email;
+            }
+            else
+            {
+                content = new EmailRequestParams()
+                {
+                    Email = email
+                };
+            }
+
+            string updatedJsonContent = JsonConvert.SerializeObject(content);
+            await File.WriteAllTextAsync(_paramsFile, updatedJsonContent);
+
+            log.LogInformation("Set email: " + content.Email);
 
             responseMessage = $"Hello, {email}. This HTTP triggered function executed successfully.";
 

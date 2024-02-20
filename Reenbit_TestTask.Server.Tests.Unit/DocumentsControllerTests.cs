@@ -6,7 +6,6 @@ namespace Reenbit_TestTask.Server.Tests.Unit
 {
     public class DocumentsControllerTests
     {
-        private readonly DocumentsController _documentsController;
         private readonly Mock<IDocumentsRepository> _documentsRepositoryMock = new Mock<IDocumentsRepository>();
         private Mock<IFormFile> _formFileMock = new Mock<IFormFile>();
         private readonly string _formFileMockName = "test.docx";
@@ -15,7 +14,6 @@ namespace Reenbit_TestTask.Server.Tests.Unit
 
         public DocumentsControllerTests()
         {
-            _documentsController = new DocumentsController(_documentsRepositoryMock.Object);
             _uploadDocRequest = new UploadDocRequest()
             {
                 File = _formFileMock.Object,

@@ -11,12 +11,16 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
 using Reenbit_TestTask.FunctionApp.Entities;
+using System.Text.Json;
+using Reenbit_TestTask.FunctionApp.Models;
+using Newtonsoft.Json;
 
 namespace Reenbit_TestTask.FunctionApp
 {
     [StorageAccount("BlobConnectionString")]
     public class UploadNotification
     {
+        private readonly string _paramsFile = "tempParams.json";
         private readonly IConfiguration _configuration;
         private readonly BlobContainerClient _blobContainerClient;
 
@@ -29,33 +33,20 @@ namespace Reenbit_TestTask.FunctionApp
         [FunctionName("UploadNotification")]
         public async Task Run([BlobTrigger("test-task-container/{name}")] Stream myBlob,
             string name,
-            [DurableClient] IDurableOrchestrationClient orchestrationClient,
             ILogger log)
         {
             log.LogInformation($"C# Blob trigger function Processed blob\n Name:{name} \n Size: {myBlob.Length} Bytes");
 
-            var prepEmailId = await orchestrationClient.StartNewAsync<string>("prepEmail", name);
-            log.LogInformation("prepEmail id: " + prepEmailId);
-        }
+            var file = File.ReadAllText(_paramsFile);
+            var requestParams = JsonConvert.DeserializeObject<EmailRequestParams>(file);
 
-        [FunctionName("prepEmail")]
-        public async Task prepEmail([OrchestrationTrigger] IDurableOrchestrationContext context,
-            ILogger logger)
-        {
-            var name = context.GetInput<string>();
+            var email = requestParams.Email;
+            log.LogInformation("Done!");
 
-            var entityId = new EntityId(nameof(RecipientEmail), "myParams");
-            logger.LogInformation($"Current id: {entityId}; getting a value...");
-
-            string currentValue = await context.CallEntityAsync<string>(entityId, "Get");
-            logger.LogInformation("Done!");
-            logger.LogInformation("currValue: " + currentValue);
-
-            string? email = currentValue;
-            logger.LogInformation($"{email}");
+            log.LogInformation($"Email: {email}");
             if (string.IsNullOrEmpty(email))
             {
-                logger.LogError("Email of a recipient does not exist");
+                log.LogError("Email of a recipient does not exist");
                 return;
             }
 
